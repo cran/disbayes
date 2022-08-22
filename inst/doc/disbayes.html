@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Chris Jackson chris.jackson@mrc-bsu.cam.ac.uk" />
+
+<meta name="date" content="2022-08-18" />
+
+<title>Bayesian estimation of chronic disease epidemiology from incomplete data: the disbayes package</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Bayesian estimation of chronic disease
+epidemiology from incomplete data: the disbayes package</h1>
+<h4 class="author">Chris Jackson <a href="mailto:chris.jackson@mrc-bsu.cam.ac.uk" class="email">chris.jackson@mrc-bsu.cam.ac.uk</a></h4>
+<h4 class="date">2022-08-18</h4>
+
+
+
+<p>This document gives an introduction to the <code>disbayes</code>
+package for estimating rates of disease given indirect data. For
+example, we might want to</p>
+<ul>
+<li><p>estimate case fatality rates, given mortality and prevalence
+and/or incidence data</p></li>
+<li><p>estimate incidence rates, given prevalence and mortality
+data.</p></li>
+</ul>
+<p>We might want to know these rates in order to build simulation models
+for estimating health impacts of interventions.</p>
+<p>Full details of the methodology is given in the paper (<span class="citation">Jackson, Zapata-Diomedi, and Woodcock
+(2021)</span>).</p>
+<p>This document gives a brief overview, illustrating the general
+principles of likelihood and Bayesian inference for estimating disease
+rates given indirect data.</p>
+<div id="theoretical-disease-model" class="section level1">
+<h1>Theoretical disease model</h1>
+<p>We represent a disease as a continuous-time, multi-state process with
+three states:</p>
+<ol style="list-style-type: decimal">
+<li>disease-free</li>
+<li>disease</li>
+<li>dead from the disease.</li>
+</ol>
+<p>If we assume that mortality from other causes is independent of
+disease status, deaths from other causes are uninformative and can be
+ignored.</p>
+<p>The disease process is then fully defined by the</p>
+<ul>
+<li><p>disease incidence <span class="math inline">\(i(a)\)</span>, and
+the</p></li>
+<li><p>case fatality rate <span class="math inline">\(f(a)\)</span>,</p></li>
+</ul>
+<p>which are both assumed to depend on age <span class="math inline">\(a\)</span>. Remission is also possible for some
+diseases, with rate <span class="math inline">\(r(a)\)</span>. Assume
+further that the rates are constant within integer years of age <span class="math inline">\(a\)</span>, so they can be written <span class="math inline">\(i_a\)</span>, <span class="math inline">\(f_a\)</span>.</p>
+<p>From these, we can determine the <em>transition probability
+matrix</em> <span class="math inline">\(P_a\)</span>, whose <span class="math inline">\(r,s\)</span> entry <span class="math inline">\(P_{ars}\)</span> is the probability that a person
+is in state <span class="math inline">\(s\)</span> at age <span class="math inline">\(a+1\)</span> given they are in state <span class="math inline">\(r\)</span> at age <span class="math inline">\(a\)</span>. The matrix <span class="math inline">\(P_a\)</span> is defined as a function of <span class="math inline">\(i_a\)</span> and <span class="math inline">\(f_a\)</span>, which is the solution to a
+differential equation, and is written out explicitly in the DisMod II
+paper (<span class="citation">Barendregt et al. (2003)</span>).</p>
+<p>Further, let <span class="math inline">\(S_a\)</span> be the “state
+occupancy probabilities”, or the proportion of individuals in a
+hypothetical birth cohort (of infinite size) who are in each state at
+age <span class="math inline">\(a\)</span>. This is a row vector with
+three elements <span class="math inline">\(S_{ar}\)</span>, one for each
+state <span class="math inline">\(r\)</span>. Assume everyone is
+disease-free at age 0. The state occupancy probabilities at each
+subsequent age <span class="math inline">\(a+1\)</span> are then
+determined by mutiplying by the transition probability matrix:</p>
+<p><span class="math display">\[ S_{a+1} = S_a P_a \]</span></p>
+<p>The prevalence of disease (among people who are alive) at each age
+<span class="math inline">\(a\)</span> is then obtained as <span class="math inline">\(pr_a = S_{a2} / (S_{a1} + S_{a2})\)</span>.</p>
+<p>The disease-specific mortality rate at age <span class="math inline">\(a\)</span>, or the probability that a person alive
+at age <span class="math inline">\(a\)</span> dies from the disease
+before age <span class="math inline">\(a+1\)</span>, can also be
+expressed in terms of the disease prevalence at age <span class="math inline">\(a\)</span> and the transition probabilities
+between ages <span class="math inline">\(a\)</span> and <span class="math inline">\(a+1\)</span>, as</p>
+<p><span class="math display">\[ dm_a = P_{a23} pr_a + P_{a13} (1 -
+pr_a) \]</span></p>
+</div>
+<div id="bayesian-approach-to-estimating-the-model-from-data" class="section level1">
+<h1>Bayesian approach to estimating the model from data</h1>
+<p>Data are observed which give information about some, but not all, of
+the parameters in the theoretical disease model. The form of the data
+available may be different in each application. We then wish to estimate
+any remaining unknown parameters. The Bayesian approach to estimating
+these unknowns can be described as four steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>write down a theoretical model for underlying disease progression
+(as done above)</p></li>
+<li><p>write down a statistical model for the observed data given the
+parameters of the underlying disease model. In this model, observed data
+need to be expressed as counts of individuals and associated
+denominators, e.g. </p></li>
+</ol>
+<ul>
+<li><p>(incidence): given a population of size <span class="math inline">\(n_a^{(mort)}\)</span>, <span class="math inline">\(r_a^{(inc)}\)</span> of these are observed to get
+the disease within the next year</p></li>
+<li><p>(mortality): given a population of size <span class="math inline">\(n_a^{(mort)}\)</span> (with or without the
+disease), <span class="math inline">\(r_a^{(mort)}\)</span> of these are
+observed to die from the disease within the next year</p></li>
+<li><p>(prevalence): from a sample of <span class="math inline">\(n_a^{(prev)}\)</span> individuals, <span class="math inline">\(r_a^{(prev)}\)</span> are known to have the
+disease at age <span class="math inline">\(a\)</span> (and <span class="math inline">\(n_a^{(prev)} - r_a^{(prev)}\)</span> are known to
+not have the disease</p></li>
+<li><p>(remission): from a sample of <span class="math inline">\(n_a^{(rem)}\)</span> individuals, <span class="math inline">\(r_a^{(rem)}\)</span> are known to recover from the
+disease in the following year.</p></li>
+</ul>
+<p>The next section discusses how these data can be derived, given the
+typical forms of data available from burden of disease studies. The data
+are expressed as numerators and denominators, rather than simply point
+estimates of rates, so that formal statistical methods (likelihood and
+Bayesian inference) can be used. The denominator is related to the
+uncertainty around the estimate, e.g. lower denominators imply that the
+estimate was obtained from observing the disease outcome of a smaller
+sample of people, hence there is more uncertainty.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><p>write down prior distributions for the unknowns. These may
+express prior ignorance, as in the example below.</p></li>
+<li><p>compute the (unique) posterior distribution of the unknown
+parameters in the joint model, given the observed data.</p></li>
+</ol>
+<p>This approach is used in the DisMod-MR package, as explained by <span class="citation">Flaxman, Vos, and Murray (2015)</span>, however the
+software itself is not fully documented. The older (published) DisMod II
+(<span class="citation">Barendregt et al. (2003)</span>) used an ad-hoc
+optimisation approach to estimate parameters.</p>
+<p>Advantages of the Bayesian method, as implemented in
+<code>disbayes</code>, include</p>
+<ul>
+<li><p>uncertainty about any quantity is quantified automatically
+through the posterior distribution, given the data, model assumptions
+and prior distributions supplied.</p></li>
+<li><p>the ease of including multiple sources of direct/indirect data.
+This is enabled by the generic computational methods and available
+software for Bayesian modelling, specifically the Stan package,
+illustrated below. This allows the approach to generalise to settings
+with different forms of data available. Currently implemented models
+include hierarchical models, models with additive area and gender
+effects, and models with age-specific time trends. In contrast, DisMod
+II only allows limited forms of data.</p></li>
+</ul>
+</div>
+<div id="data-required-by-the-bayesian-model" class="section level1">
+<h1>Data required by the Bayesian model</h1>
+<div id="given-estimates-and-denominators" class="section level2">
+<h2>…Given estimates and denominators</h2>
+<p>The following data are given in the R data frame
+<code>ihdengland</code> supplied in the package.</p>
+<ul>
+<li><p><code>inc_num</code>,<code>inc_denom</code>: incidence of IHD by
+age</p></li>
+<li><p><code>mort_num</code>,<code>mort_denom</code>: estimates of
+IHD-specific mortality by age</p></li>
+<li><p><code>prev_num</code>,<code>prev_denom</code>: estimates of
+prevalence by age</p></li>
+</ul>
+<p>and we wish to estimate case fatality by age, given these inputs. A
+selection of rows from the full data frame are shown here. We select
+only the data from one area and gender (Bristol, male) for this
+illustration. Remission rates are assumed to be zero, hence remission
+data are not included.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(disbayes)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr,<span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>ihdbristol <span class="ot">&lt;-</span> ihdengland <span class="sc">%&gt;%</span> <span class="fu">filter</span>(area<span class="sc">==</span><span class="st">&quot;Bristol&quot;</span>, gender<span class="sc">==</span><span class="st">&quot;Male&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>ihdbristol <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">between</span>(age, <span class="dv">50</span>, <span class="dv">55</span>))</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 9
+##     age gender area    inc_num inc_denom prev_num prev_denom mort_num mort_denom
+##   &lt;dbl&gt; &lt;chr&gt;  &lt;fct&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;
+## 1    50 Male   Bristol      28      8326      142       5810        4       7817
+## 2    51 Male   Bristol      32      8294      140       5041        4       7771
+## 3    52 Male   Bristol      32      7934      140       4433        4       7664
+## 4    53 Male   Bristol      30      7245      144       3985        5       7498
+## 5    54 Male   Bristol      28      6223      150       3699        5       7274
+## 6    55 Male   Bristol      23      4874      158       3574        5       6990</code></pre>
+<p>These data were obtained from the Global Burden of Disease, 2017, and
+transformed in three ways to obtain the data seen here.</p>
+<p>Firstly, the published point estimates and confidence intervals for
+each annual risk probability were converted to an implicit numerator and
+denominator. This is done by assuming that</p>
+<ul>
+<li><p>the incidence has been estimated as <span class="math inline">\(r_a^{(inc)}/n_a^{(inc)}\)</span>, where out of
+<span class="math inline">\(n_a^{(inc)}\)</span> people who are alive at
+age <span class="math inline">\(a\)</span>, <span class="math inline">\(r_a^{(inc)}\)</span> of these get IHD before age
+<span class="math inline">\(a+1\)</span>.</p></li>
+<li><p>the mortality has been estimated as <span class="math inline">\(r_a^{(mort)}/n_a^{(mort)}\)</span>, where out of
+<span class="math inline">\(n_a^{(mort)}\)</span> people who are alive
+at age <span class="math inline">\(a\)</span>, <span class="math inline">\(r_a^{(mort)}\)</span> of these die of IHD before
+age <span class="math inline">\(a+1\)</span>. These ratios are estimates
+of the true, underlying disease-specific mortalities <span class="math inline">\(dm_a\)</span>.</p></li>
+<li><p>the prevalence has been estimated as <span class="math inline">\(r_a^{(prev)}/n_a^{(prev)}\)</span>, where out of
+<span class="math inline">\(n_a^{(prev)}\)</span> people who are alive
+at age <span class="math inline">\(a\)</span>, <span class="math inline">\(r_a^{(prev)}\)</span> of them have IHD.</p></li>
+</ul>
+<p>The published estimates and uncertainty interval are then used to
+derive the implicit denominator and numerator, using the method
+described in the next subsection.</p>
+<p>Secondly, estimates for five-year age groups were converted to
+one-year groups. Most simply this could be done by assuming the counts
+are equal for each year of age, but a more sophisticated method was used
+based on “temporal disaggregation” using one of the methods implemented
+by Sax and Steiner in the <code>tempdisagg</code> R package (<span class="citation">Sax and Steiner (2013)</span>). This ensures that the
+disaggregated counts vary smoothly with age, while preserving the
+aggregate totals.</p>
+<p>Thirdly, counts from smaller geographical areas were simply added up
+to obtain the corresponding counts for the larger areas (English city
+regions) required in this analysis.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ihdbristol[ihdbristol<span class="sc">$</span>age <span class="sc">%in%</span> <span class="dv">50</span><span class="sc">:</span><span class="dv">55</span>, ]</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 9
+##     age gender area    inc_num inc_denom prev_num prev_denom mort_num mort_denom
+##   &lt;dbl&gt; &lt;chr&gt;  &lt;fct&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;
+## 1    50 Male   Bristol      28      8326      142       5810        4       7817
+## 2    51 Male   Bristol      32      8294      140       5041        4       7771
+## 3    52 Male   Bristol      32      7934      140       4433        4       7664
+## 4    53 Male   Bristol      30      7245      144       3985        5       7498
+## 5    54 Male   Bristol      28      6223      150       3699        5       7274
+## 6    55 Male   Bristol      23      4874      158       3574        5       6990</code></pre>
+</div>
+<div id="smoothly-disaggregating-data-from-age-groups-to-years-of-age" class="section level2">
+<h2>Smoothly disaggregating data from age groups to years of age</h2>
+<p>As an aside, here we show how the temporal disaggregation procedure
+is done in R. We have a disease count outcome that is measured for
+5-year age groups, as in the following data frame.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">agefrom=</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">20</span>,<span class="dv">5</span>), <span class="at">ageto=</span><span class="fu">seq</span>(<span class="dv">4</span>,<span class="dv">24</span>,<span class="dv">5</span>),</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">measure=</span><span class="fu">c</span>(<span class="dv">15</span>,<span class="dv">20</span>,<span class="dv">24</span>,<span class="dv">35</span>,<span class="dv">29</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dat</span></code></pre></div>
+<pre><code>##   agefrom ageto measure
+## 1       0     4      15
+## 2       5     9      20
+## 3      10    14      24
+## 4      15    19      35
+## 5      20    24      29</code></pre>
+<p>The following code shows how to produce a smoothly disaggregated
+version of this count, and compares the smooth disaggregation to a crude
+disaggregation where the 5-year counts are simply divided by 5 to
+estimate one-year counts. We can check that the smoothly-disaggregated
+measures add up to the original data that were provided for the 5-year
+age groups.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;tempdisagg&quot;</span>)) { </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>   disagg_crude <span class="ot">&lt;-</span> <span class="fu">rep</span>(dat<span class="sc">$</span>measure<span class="sc">/</span><span class="dv">5</span>, <span class="at">each=</span><span class="dv">5</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>   disagg_smooth <span class="ot">&lt;-</span> <span class="fu">predict</span>(tempdisagg<span class="sc">::</span><span class="fu">td</span>(dat<span class="sc">$</span>measure <span class="sc">~</span> <span class="dv">1</span>, <span class="at">to=</span><span class="dv">5</span>, <span class="at">method=</span><span class="st">&quot;fast&quot;</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>   ageyr <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">24</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">plot</span>(ageyr, disagg_crude, <span class="at">type=</span><span class="st">&quot;l&quot;</span>, <span class="at">xlab=</span><span class="st">&quot;Age&quot;</span>, <span class="at">ylab=</span><span class="st">&quot;Measure&quot;</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">8</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">lines</span>(ageyr, disagg_smooth, <span class="at">col=</span><span class="st">&quot;blue&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>   agegroup <span class="ot">&lt;-</span> <span class="fu">cut</span>(ageyr, <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">25</span>,<span class="dv">5</span>), <span class="at">right =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tapply</span>(disagg_smooth, agegroup, sum)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## Loading required namespace: tempdisagg</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAEgCAMAAABcujGyAAAAWlBMVEUAAAAAADoAAGYAAP8AOjoAOpAAZrY6AAA6ADo6AGY6Ojo6kNtmAABmADpmZjpmtv+QOgCQkGaQ2/+2ZgC2tma225C2///bkDrb////tmb/25D//7b//9v///+b9drRAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAJ6UlEQVR4nO3di3ajRhpF4bITy51YSSsmMUaX93/NqLjYlltAUfAXB9jfmpnVmfGoDNpdXATIXQBhbu5fAOhCoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJBGoJA2caAOCGITaObc7ny4vvzPSV4Om2UTaP70fm10d7mc9i8TvBy2yyTQ8+GaZfHweqlSHfty2DCTQE/765a9eHy7NP/5+SqDdy2wbcygkGa8D1qmOvrlsF0cxUOaUaCpXw5rRaCQRqCQRqCQRqCQRqCQRqDb81uHuX+3XxDohgREKFcpgW7BwOlRaTIl0BW5d71v2VrUlcLN/3PmZZr8B2d5OVzurdPx8+DsUymBrsb3VTpZWrNGSqCrcbNKp23KTfx6g4ae+gdneTl8XaPT1+Quc02kBLoSHyvUJqP6WCl9owS6DvX6NAyoeccST6QEug71Nth6iFrCRgl0FZyPxnyQr29aqok0JtDT3j29Zy03G009LgK4BHlW49xIEWlEoMXDa/703vpIhlL2+HY5PjtX3tk5alz0c8m2uBafBQwdse8H/Y2a/q7N/PaO9xtlnz9e6zvkR42LXikPWu598mk6kQ4P1DfnAy3aAy1n12zn/8h98cb85+VJB7w/mlmk8TNo1pLepWq4viOeJ4uY8lWkXpWt45lEGr0Pmrfe8n6pZs+cGdRa2UP6Ndk1u0x+oV7kUXzH4U/1E49vX55/M2ZctKlDmGNN9ow55fWkVudBi2pDvpvo5fBdE8A8K3LI9aQD3Bsp+Fdq/tD6uKVhSzjBa2zX5/ykvh5HT6ZxR/Hjqa9YZV/e8IWsxhF35MUcJHWcAJ1+XNy6fZ+XtRpjOo2ZQesdhlGdLmvNqvj+7i5zLQ660ZmLRZbjlzdzFSuxJ1YCXYg7b98m1iGb+CUYObksWfQMOvJQaRMrdyIt+2nbWIXxm/is9ST8pONuXethxEbWYHyg46bQjazecboOcreyAuMD7boedMJxN6vnDMxWVmB0oKc9m3gz/ecHN7P+4o/i2y8HnXTcpRt2tUR9kUXUZRXrxHlQU0NLmv1ZXXII1NCwPInznohA/R1HOZv4XuF5Kj0wVk1EoNnT+/F5x3nQboF5kmaPuOtBC/eT86BdAvJk2gwSF6i/753zoK3a8hxymRkqMZv43WnvnyzSv4k/PrdefL+eQH8LN/evukRRB0nu4fV86Ojz44Kn9mueFhloSHUbOkWZhM1ppsKVN9YtfQYdPgOS59SMzoP6nYB7gap8FNLzSU5t+KdA8y7VGsVt4rs23rXs4VV2Br0bEnuKkuLOg+a7rvgquXvRDPRbnnQpLeY008ul8I9f7Pso6fj8u2KgHyMT5hLEnQc9/vFW/rvb+dD+gLG5Ai2nT8pcjrhH35z+eg0IdJJxp+VIc2Ei9kH9R0jZS/8mfppxJ8O0uUgxp5mynT+SX9BdnVWanARaopVfD/pl2iTPRVproN8P0Zk+FyomUOnvSWr5hNxqOBiLefxiwPckTTdusI7TmkyfyxV3mqnve5ImHLdX7ydB5LlkcSfqe74nKXbcYRdmhF7RMeK3xOziZ9CO70mactyvuPx3e6L3QTu/J2n8uCHXBmMDIo/ie74nKXJcWsR3az0PipUgUEgbGOj58Hl0LHKaCas2dAY97UfufA4dF9sWc5rJTfBdiASKIFH7oNnIa+2GjIttizxIyl33adDr/179QNsHogSKINFH8cfnjlk0v+6oVs/GIVCMEheoP5jv6LP6xu7zoeOSEgJFkJhAC9ezgW++sdvfQX8bKJdwYJjhgWbO9T3XrppB/c/umEExytBA86AD+CbL9nvrCBRBjD5Jaq51Oh8IFGPwWTykESikESikESikESikESikESikESikESikESikESikESikESikESikESikESikESikESikGQXa3BrSelsIgSKITaB58/imou05TgSKICaBftx2fGn9Rk8CRRCTQJsHN1wVPLgBYzCDQprVPmg9hbIPinGMjuLLLwK5av0uJQJFEM6DQtpsgQJBZgp0tjFSj7TOoQQ3gATKUHOMFIxAGWqOkYIRKEPNMVIwAmWoOUYKRqAMNcdIwQiUoeYYKRiBMtQcIwUjUIaaY6Rggr8S8IlAIY1AIY1AIY1AIY1AIY1AIY1AIY1AIY1AIY1AIY1AIY1AIc080MK5h1frQbzqoRK7BCMd/ygfTJViyaqhzBetfKxm+bCYZG9XKOtAi+viFkkW+fgj0Yo97csnp6VYsnoo60U7H67Lkfu/AenerlDGgVbPG8tSzGtF61N1Jx6nen5viiWrhzJftOOzf+ZW/viW8O0KZRzox6LbDuPlaVZr4V7KXhIsWTNUokW7zpwJ365Q1oGWG6ckk1v2Z7MfZa0KNMmSVa+fZtGyx7eEb1co40Cr/ZkUezWnvX/kXpai0PINTLNk5VBpFs0/UjPd2xVsNYHW46X4y5860F/+aDJSc4y0rUBTbzOqnShjyTfxJdtFqx5JvL1NfOq97iTnmlIdJF1uA7VctPr7W7Z3kJTuvEW1btNt4tMs2Ze/C5aL1jzbfXunmRKe+S1Xa7qDpDRLVh/FGy/a8bl57c2dqPd/OVN9dpY55xLsgX7MZSmWrB7KeNHy6qHHfmnSvV2BuFgE0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0gjUSJbmceSrR6A2jj/+VnrK5nIRqI388b8UD3tePwI1cT7srv8q/5g59/BP/WRDNvuDEagJ/xDYvHzQZnbd0heu/sfPJ8UiEIGayJ7eL6f9S/P47uzhtfwnre8nWAQCtVDNlOXk2TwuvHqwdpJvIVkVArVQP1Pb/ay/McMH+vFfYQgCNVAfH532u+8zKIYiUANNjPnH17P6fVDmzhgEasAfInl+V/TmKN4fLc38uy0NgU7v80jI15k59/iv39D7HVMO4oci0BQ4uxSNQG2Vs2l1DhQxCNRYwbmlUQgU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0ggU0v4Hq2BQPlloh4gAAAAASUVORK5CYII=" /><!-- --></p>
+<pre><code>##   [0,5)  [5,10) [10,15) [15,20) [20,25) 
+##      15      20      24      35      29</code></pre>
+<p>See the documentation for the <a href="https://CRAN.R-project.org/package=tempdisagg">tempdisagg</a>
+package, including the vignettes and the help page for the
+<code>td</code> function in this package, for more information about
+smooth temporal disaggregation. It is unclear how far the method
+generalises, e.g. to intervals of varying lengths.</p>
+</div>
+<div id="determining-numerators-and-denominators-from-point-andor-interval-estimates" class="section level2">
+<h2>Determining numerators and denominators from point and/or interval
+estimates</h2>
+<p>Sometimes a point estimate <span class="math inline">\(\hat{p}\)</span> for a quantity such as incidence
+is published alongside an (e.g. 95%) interval estimate <span class="math inline">\((\hat{p}^{(lower)},\hat{p}^{(upper)})\)</span>.
+The interval estimate can be assumed to express the uncertainty
+associated with the estimate. Such information can be converted to an
+implicit numerator <span class="math inline">\(r\)</span> and
+denominator <span class="math inline">\(n\)</span> as follows. We assume
+the point and interval estimate are summaries of a Beta posterior
+distribution which has been obtained by combining a vague prior with an
+observation of <span class="math inline">\(r\)</span> events occurring
+out of a sample of <span class="math inline">\(n\)</span> individuals.
+If a Beta(0,0) prior is used, then the posterior is known to be Beta(r,
+n-r). We can then search for the best-fitting Beta(r,n-r)$ distribution
+which has median <span class="math inline">\(\hat{p}\)</span> and
+(2.5,97.5) quantiles <span class="math inline">\((\hat{p}^{(lower)},\hat{p}^{(upper)})\)</span>,
+and set <span class="math inline">\(r=a, n=a+b\)</span>. A utility to
+perform this search is provided in the <a href="https://CRAN.R-project.org/package=SHELF">SHELF</a> package for
+expert elicitation (<span class="citation">O’Hagan et al.
+(2006)</span>).</p>
+<p>In other applications, the denominators might be directly available,
+e.g. we might know that the prevalence was estimated from a survey of
+<span class="math inline">\(r_a^{(prev)}\)</span> people, or we might
+assume that the incidence and mortality were obtained from a
+comprehensive registry of the population, in which case the denominator
+would equal the population size (within the specific stratum, e.g. as
+defined by age and gender, that the estimate refers to).</p>
+<p>The uncertainty inherent in the information supplied about each of
+incidence, prevalence and mortality is measured by the denominator. In
+the example above, this is equated to the size of the population used to
+produce the estimate. However, if we also suspected that one of the data
+sources may be biased, but were unsure about the direction of bias, we
+could downweight that data source by multiplying both the numerator and
+denominator by the same amount, e.g. 0.5 if we wanted to give a data
+source half its original weight. Note that if counts are scaled in this
+way, they should then be rounded to the nearest integer.</p>
+</div>
+<div id="bayesian-modelling-process" class="section level2">
+<h2>Bayesian modelling process</h2>
+<p>The four steps of the Bayesian modelling process are then implemented
+as follows:</p>
+<ol style="list-style-type: decimal">
+<li><p>write down the theoretical disease model, as given above</p></li>
+<li><p>write down the statistical model for the data. All count data are
+assumed to arise from a Binomial distribution with the corresponding
+denominator, and a probability parameter which is a function of the
+parameters in the theoretical disease model.</p>
+<ul>
+<li><p>(incidence) <span class="math inline">\(r_a^{(inc)} \sim ~
+Binomial(n_a, 1 - P_{a11})\)</span>, where <span class="math inline">\(P_{a11}\)</span> is the annual probability of
+remaining free of the disease.</p></li>
+<li><p>(mortality) <span class="math inline">\(r_a^{(mort)} \sim ~
+Binomial(n_a, dm_a)\)</span>, where the disease-specific mortality <span class="math inline">\(dm_a\)</span> is a deterministic function of the
+incidences and case fatalities <span class="math inline">\(\{i_j,f_j\}\)</span> for ages <span class="math inline">\(j\)</span> up to <span class="math inline">\(a\)</span>, as described in the theoretical
+disease model.</p></li>
+<li><p>(prevalence) <span class="math inline">\(r_a^{(prev)} \sim ~
+Binomial(n_a^{(prev)}, pr_a)\)</span>, where <span class="math inline">\(pr_a\)</span> is the true prevalence, defined as a
+deterministic function of the incidences and case fatalities.</p></li>
+<li><p>(remission, if assumed possible) <span class="math inline">\(r_a^{(rem)} \sim ~ Binomial(n_a^{(rem)},
+P_{a21})\)</span>, where <span class="math inline">\(P_{a21}\)</span> is
+the probability that someone with the disease will have recovered from
+the disease one year from now, defined as a deterministic function of
+the remission rates, case fatalities and incidences.</p></li>
+</ul></li>
+<li><p>define prior distributions for the unknown parameters, as
+explained in the next section.</p></li>
+<li><p>compute the posterior distribution <span class="math inline">\(p(\theta | \mathbf{y})\)</span> for parameters
+<span class="math inline">\(\theta = \{i_a,f_a\}\)</span> given data
+<span class="math inline">\(\mathbf{y} = \{i_a, r_a,
+n_a\}\)</span></p></li>
+</ol>
+</div>
+<div id="alternative-models-prior-assumptions" class="section level2">
+<h2>Alternative models / prior assumptions</h2>
+<p>In example such as this one, where latent quantities are estimated
+from indirect data, it is important to consider what substantive prior
+information is available about the unknown quantities, and what
+influence the assumed prior has on the resulting estimates.</p>
+<p>In these examples, the case fatality is only informed indirectly. The
+<code>disbayes</code> package implements alternative models for how case
+fatality depends on age. The same methods can be used for how incidence
+depends on age.</p>
+<ol style="list-style-type: decimal">
+<li><p>the case fatality rate <span class="math inline">\(f_a\)</span>
+for each year of age <span class="math inline">\(a\)</span> is assumed
+to have an independent vague prior distribution.</p></li>
+<li><p>the case fatality rate is assumed to be a smooth function <span class="math inline">\(g()\)</span> of age, <span class="math inline">\(f_a = g(a)\)</span>. This smooth function is
+defined by a spline basis <span class="math inline">\(log(f_a) = \sum_k
+\beta_k g_k(a)\)</span>, where <span class="math inline">\(g_k()\)</span> are basis functions. A “thin plate”
+spline is used, following the default in the <code>mgcv</code> R package
+(Wood), and the amount of smoothness is determined automatically through
+a hierarchical prior on the coefficients.</p></li>
+<li><p>the case fatality rate is a smoothly increasing function of
+age.</p></li>
+<li><p>the case fatality rate is constant with age.</p></li>
+</ol>
+<p>In addition, for all ages below a given cut-off age <span class="math inline">\(a_{base}\)</span>, case fatalities are assumed to
+be equal to a constant <span class="math inline">\(f_{base}\)</span>.
+This cut-off age <span class="math inline">\(a_{base}\)</span> needs to
+be supplied when calling the <code>disbayes</code> function. <span class="math inline">\(f_{base}\)</span> does not need to be supplied
+however, and is estimated from the data under the assumption that the
+dependence on age is a smooth function.</p>
+<p>Model (2) is more realistic. However it may not give sensible
+estimates if the information provided by the data is too weak. The
+results of fitting Model (1) can help to diagnose where the indirect
+information on case fatality provided by the rest of the data is weaker
+or stronger. If the information on <span class="math inline">\(f_a\)</span> for a particular age is too weak,
+then the posterior distribution will be identical to the prior. In those
+cases, substantive prior information about case fatality at that age is
+necessary for the estimates to be meaningful.</p>
+<p>This information might come from nearby ages that are
+better-informed, through extrapolation from the smoothing model. However
+extrapolating in this way is only feasible for a limited time span
+(perhaps around 10-20 years) before stronger assumptions are necessary,
+e.g. that case fatality is constant below a certain age.</p>
+<p>The increasing model (3) may be required in cases where the data
+alone are not sufficient to identify an increasing shape with age. A
+constant model (4) may be necessary if the data on age variations are
+very weak, or simply if this model is thought to be plausible.</p>
+<p>Alternative models of how the rates depend on age are also supported
+for incidence and remission rates.</p>
+</div>
+</div>
+<div id="fitting-bayesian-models-with-the-stan-software-via-disbayes" class="section level1">
+<h1>Fitting Bayesian models with the Stan software via disbayes</h1>
+<p>The <code>disbayes</code> software works by calling the Stan software
+(<a href="https://mc-stan.org">mc-stan.org</a>) that allows any Bayesian
+model to be written down in the Stan language, and enables the unknown
+parameters to be estimated through two alternative methods:</p>
+<ol style="list-style-type: decimal">
+<li><p><code>method=&quot;opt&quot;</code> (the default). Optimisation is used to
+find the mode of the posterior distribution, which gives a point
+estimate for the parameters. An approximate sample from the posterior is
+then drawn using a normal approximation around the posterior mode. This
+sample is summarised to give credible intervals.</p></li>
+<li><p><code>method=&quot;mcmc&quot;</code>. A sample from the posterior is drawn
+using Markov Chain Monte Carlo sampling, which is summarised to give a
+point estimate (median) and credible intervals. This is slower
+(typically taking a few minutes) but gives a more accurate
+characterisation of uncertainty.</p></li>
+</ol>
+<p>The <code>disbayes</code> package uses Stan to fit the Bayesian
+disease model given here to the data <span class="math inline">\(\mathbf{y} = \{i_a, r_a, n_a\}\)</span> supplied
+in the <code>ihdbristol</code> data frame. The R function
+<code>disbayes</code> does the work of converting the data to the
+required format for Stan, and calling the Stan software to run the
+simulations.</p>
+<p>An overview of using the <code>disbayes</code> function is given
+here, but see the <a href="https://chjackson.github.io/disbayes/reference/disbayes.html">help
+page</a> for <code>disbayes</code> for full information about the
+options of the function.</p>
+<p>The <code>disbayes</code> function requires at least the following
+arguments</p>
+<ul>
+<li><p><code>data</code>: a data frame where all the variables are
+stored</p></li>
+<li><p>additional arguments indicating which columns of the data contain
+which variables.</p></li>
+</ul>
+<p>The required variables include at least information about incidence
+and mortality, optionally information about prevalence, and some
+indication of uncertainty around this information. This information can
+be supplied in three alternative ways. For example (using incidence as
+an example):</p>
+<ol style="list-style-type: decimal">
+<li><p><em>numerator and denominator</em>, through arguments
+<code>inc_num</code> and <code>inc_denom</code>. This is what is done in
+the example here.</p></li>
+<li><p><em>risk probability estimate with denominator</em>: through
+arguments <code>inc_prob</code> and <code>inc_denom</code>. The
+numerator is computed automatically, by multiplying the denominator by
+the risk estimate. Note these refer to annual probabilities of having an
+event, not rates.</p></li>
+<li><p><em>risk probability estimate with lower and upper 95% credible
+limits</em>, through arguments <code>inc_prob</code>,
+<code>inc_lower</code> and <code>inc_upper</code>. The numerator and
+denominator are computed automatically, as described above.</p></li>
+</ol>
+<p>The value given for the argument is a character string identifying
+the corresponding variable in the data. For mortality, prevalence and
+remission, arguments with names beginning <code>mort</code>,
+<code>prev</code> and <code>rem</code> are supplied in the same
+manner.</p>
+<p>If remission data are omitted, it is assumed that there is no
+remission from the disease. If remission data are included, it is
+assumed that remission is possible and remission rates are estimated
+from the data.</p>
+<div id="running-disbayes-optimisation-method" class="section level2">
+<h2>Running <code>disbayes</code>: optimisation method</h2>
+<p>The following call to the <code>disbayes</code> function is then made
+to fit the model to the <code>ihdbristol</code> data. The argument
+<code>eqage=40</code> defines an assumption that case fatality is
+constant for all ages below 40.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dbres <span class="ot">&lt;-</span> <span class="fu">disbayes</span>(<span class="at">data =</span> ihdbristol, <span class="at">age =</span> <span class="st">&quot;age&quot;</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">inc_num =</span> <span class="st">&quot;inc_num&quot;</span>, <span class="at">inc_denom =</span> <span class="st">&quot;inc_denom&quot;</span>, </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">prev_num =</span> <span class="st">&quot;prev_num&quot;</span>, <span class="at">prev_denom =</span> <span class="st">&quot;prev_denom&quot;</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">mort_num =</span> <span class="st">&quot;mort_num&quot;</span>, <span class="at">mort_denom =</span> <span class="st">&quot;mort_denom&quot;</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eqage =</span> <span class="dv">40</span>)</span></code></pre></div>
+<p>For comparison, we also fit an “unsmoothed” version of this model
+where the age-specific case fatality rates have independent priors,
+rather than being related through a spline function. This is specified
+with <code>cf_model=&quot;indep&quot;</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dbresu <span class="ot">&lt;-</span> <span class="fu">disbayes</span>(<span class="at">data =</span> ihdbristol, <span class="at">age =</span> <span class="st">&quot;age&quot;</span>,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">inc_num =</span> <span class="st">&quot;inc_num&quot;</span>, <span class="at">inc_denom =</span> <span class="st">&quot;inc_denom&quot;</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">prev_num =</span> <span class="st">&quot;prev_num&quot;</span>, <span class="at">prev_denom =</span> <span class="st">&quot;prev_denom&quot;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">mort_num =</span> <span class="st">&quot;mort_num&quot;</span>, <span class="at">mort_denom =</span> <span class="st">&quot;mort_denom&quot;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">cf_model =</span> <span class="st">&quot;indep&quot;</span>, </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eqage =</span> <span class="dv">40</span>)</span></code></pre></div>
+<p>The optimisation method produces accurate point estimates (defined by
+the posterior mode), and approximate credible intervals.</p>
+<p>Occasionally the optimisation may produce an error message that
+mentions <code>chol(H)</code>, but still produce a point estimate. This
+indicates that the level of uncertainty cannot be determined, and casts
+doubt on the validity of the point estimate. In these cases it may work
+if the model is simplified, e.g. by fixing the level of smoothness for
+the age-dependence of the rates by using the <a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>hp_fixed</code></a>
+option to <code>disbayes</code></p>
+</div>
+<div id="running-disbayes-mcmc-method" class="section level2">
+<h2>Running <code>disbayes</code>: MCMC method</h2>
+<p>If more accurate credible intervals are desired, then MCMC sampling
+can be used instead by setting <code>method=&quot;mcmc&quot;</code>, as follows.
+This is more computationally intensive, typically taking a few minutes
+per fit for the standard <code>disbayes</code> model.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">mc.cores =</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>())</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>dbresm <span class="ot">&lt;-</span> <span class="fu">disbayes</span>(<span class="at">data =</span> ihdbristol, <span class="at">age =</span> <span class="st">&quot;age&quot;</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">inc_num =</span> <span class="st">&quot;inc_num&quot;</span>, <span class="at">inc_denom =</span> <span class="st">&quot;inc_denom&quot;</span>, </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">prev_num =</span> <span class="st">&quot;prev_num&quot;</span>, <span class="at">prev_denom =</span> <span class="st">&quot;prev_denom&quot;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">mort_num =</span> <span class="st">&quot;mort_num&quot;</span>, <span class="at">mort_denom =</span> <span class="st">&quot;mort_denom&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">method=</span><span class="st">&quot;mcmc&quot;</span>, <span class="at">chains=</span><span class="dv">2</span>, <span class="at">iter=</span><span class="dv">1000</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eqage =</span> <span class="dv">40</span>)</span></code></pre></div>
+<p>The sampling by <code>rstan</code> can be controlled, e.g. by setting
+the number of chains to run (perhaps on parallel cores) and the number
+of iterations - see <a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>help(disbayes)</code></a>
+and the Stan documentation for full details. The number of iterations
+<code>iter</code> should be high enough that the results are not
+affected by Monte Carlo error.</p>
+<p>After using MCMC, we should check that the sampler has converged, by
+examining the “trace plot” of the simulation progress for selected
+parameters. The simulated chains should mix together and look like white
+noise. Also if the <code>disbayes</code> call resulted in many reports
+of “divergent transitions”, then the chains are unlikely to have
+converged to a valid posterior. If convergence hasn’t occurred, then the
+model probably needs to be simplified (e.g. by increasing
+<code>eqage</code>, or fixing the degree of smoothness using <a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>hp_fixed</code></a>),
+or the data are insufficient.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>rstan<span class="sc">::</span><span class="fu">traceplot</span>(dbres<span class="sc">$</span>fit, <span class="at">pars=</span><span class="fu">paste0</span>(<span class="st">&quot;cf[&quot;</span>, <span class="dv">60</span><span class="sc">:</span><span class="dv">65</span>, <span class="st">&quot;]&quot;</span>))</span></code></pre></div>
+</div>
+</div>
+<div id="ihd-example-results" class="section level1">
+<h1>IHD example: Results</h1>
+<p>The <code>disbayes</code> function returns a list, with components
+that depend on what estimation method was used. For
+<code>method=&quot;opt&quot;</code> this list has a component <code>fit</code>
+containing the estimates and draws from the posterior approximation, as
+returned by the function <code>optimizing</code> in the
+<code>rstan</code> package. For <code>method=&quot;mcmc&quot;</code>, this list
+has a component <code>fit</code> which is an object in the
+<code>stanfit</code> format defined by the <code>rstan</code> R
+interface to Stan. See <code>help(disbayes)</code> for further details
+of the returned object. Usually you will not need to deal with this
+list.</p>
+<p>Instead, the parameter estimates can be easily extracted from a
+disbayes object using the <code>tidy</code> method. This works whatever
+optimisation method is used. The point estimates (modes or posterior
+medians) 95% credible intervals and other quantiles for all parameters
+of interest are arranged in a data frame, with the variables indicated
+in the variable called <code>var</code>. Variables include
+<code>inc</code> (incidence), <code>cf</code> (case fatality),
+<code>mort</code> (mortality), <code>prev</code> (prevalence), each
+indexed by year of age given in the <code>age</code> variable.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>summ <span class="ot">&lt;-</span> <span class="fu">tidy</span>(dbres) </span></code></pre></div>
+<p>To extract results for a specific variable and model, it is
+convenient to use standard <a href="https://www.tidyverse.org/">tidyverse</a> functions, e.g. to get
+the median and interquartile range of case fatality for people aged
+between 60 and 65:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr,<span class="at">quietly=</span><span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>summ <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(var<span class="sc">==</span><span class="st">&quot;cf&quot;</span>, <span class="fu">between</span>(age,<span class="dv">60</span>,<span class="dv">65</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(age, <span class="st">`</span><span class="at">25%</span><span class="st">`</span>, <span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="st">`</span><span class="at">75%</span><span class="st">`</span>)</span></code></pre></div>
+<pre><code>##   age        25%        50%        75%
+## 1  60 0.01617422 0.01739493 0.01866258
+## 2  61 0.01631400 0.01756264 0.01876775
+## 3  62 0.01647009 0.01772238 0.01883157
+## 4  63 0.01666472 0.01785346 0.01896047
+## 5  64 0.01687954 0.01800224 0.01915966
+## 6  65 0.01711405 0.01823067 0.01930665</code></pre>
+<p>The default <code>plot</code> method for objects returned by
+<code>disbayes</code> plots the posterior summaries for case fatality,
+allowing a quick check of the model results. Or do
+<code>plot(..., variable=&quot;inc&quot;)</code> for incidence. The function
+returns a <code>ggplot2</code> object that can be modified with
+<code>ggplot2</code> functions, e.g. to add axis labels.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dbres) <span class="sc">+</span>  <span class="fu">ylab</span>(<span class="st">&quot;Case fatality&quot;</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">&quot;Age&quot;</span>) </span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>More flexible plots can be built by using <code>ggplot</code>
+directly on the tidied estimates. The following shows the estimates of
+case fatality from the unsmoothed model in blue, with the estimates from
+the smoothed model superimposed in black.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>summs <span class="ot">&lt;-</span> summ <span class="sc">%&gt;%</span> <span class="fu">filter</span>(var<span class="sc">==</span><span class="st">&quot;cf&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>summu <span class="ot">&lt;-</span> <span class="fu">tidy</span>(dbresu) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(var<span class="sc">==</span><span class="st">&quot;cf&quot;</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(summu, <span class="fu">aes</span>(<span class="at">x=</span>age)) <span class="sc">+</span> </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">ymin=</span><span class="st">`</span><span class="at">2.5%</span><span class="st">`</span>, <span class="at">ymax=</span><span class="st">`</span><span class="at">97.5%</span><span class="st">`</span>),</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data=</span>summu, <span class="at">col=</span><span class="st">&quot;blue&quot;</span>, <span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">ymin=</span><span class="st">`</span><span class="at">2.5%</span><span class="st">`</span>, <span class="at">ymax=</span><span class="st">`</span><span class="at">97.5%</span><span class="st">`</span>),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data=</span>summ, <span class="at">col=</span><span class="st">&quot;black&quot;</span>, <span class="at">alpha=</span><span class="fl">0.5</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAEgCAMAAABcujGyAAABF1BMVEUAAAAAAAMAAA8AADoAAGYAOpAAZrYBAQMBAQ8DAwMDAw8DAz8HBwcHBz8ODg4ODj4ODn4ODv4PDw8PD/8dHR0dHT0dHX0dHf0fHx8fHz8fH/8zMzM6AAA6ADo6AGY6Ojo6Ono6Ovo6kNs/Pz8/P38/P/9NTU1NTW5NTY5NbqtNjshmAABmADpmAGZmtv9uTU1uTW5uTY5ubqtuq8huq+R1dXV1dfV/f39/f/+OTU2OTW6OTY6ObquOyP+QOgCQOmaQkGaQtpCQ27aQ2/+rbk2rbm6rbo6rjk2ryKur5P+2ZgC2///Ijk3I///bkDrb///kq27k///r6+v/tmb/yI7/25D/29v/5Kv//7b//8j//9v//+T///8W1FXxAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAOEUlEQVR4nO2de0Mayx2GtzWXo03x6InGNmkISYMxtkljDc2l5LSNp61REq9Fwn7/z9GZZbnD7ioD87C87x/ruosPP4aHmZ0RMQgVBZzAdwGKkhQJqqAjQRV0JKiCjgRV0JGgCjopgtZfl1/UwrDxvrxz2j52lpDEk5kDooBKIVGmX0o2QRvvq+HJzmnzwHx5KUFFcQpxIGh97zRsfDhsfKyF9Tc1CSqKS4g7QeMv5sBDk8SfUBSnyTDEbx9e7LQFtfH7ypoxBVQKiULpQe0k6a+/9PSgElQUZxAXgtpe9GNN16CiTAHiYhZvuk0zfW8e7GsWL4priIse9KIcLYBqHVQU9xBHQ/xQ/BY+YwqoFBJFglIooFJIFAlKoYBKIVEmhlTSKBJ0hpD8USQohQIqhUSRoBQKqBQSRYJSKKBSSBQJSqGASiFRJCiFAiqFRJGgFAqoFBJFglIooFJIFAlKoYBKIVEkKIUCKoVEkaAUCqgUEkWCUiigUkgUCUqhgEohUSQohQIqhUSRoBQKqBQSRYJSKKBSSBQJSqGASiFRJCiFAiqFRJGgFAqoFBIFLaiiTJx3WW+oHnQGkPxR0D3oVAunUUClkCgSlEIBlUKiSFAKBVQKiSJBKRRQKSSKBKVQQKWQKHMuaGXC6vP0TOSTIkEdhPFM5JOSd0FTbpCnZyKflPwKWkm7QVrh2ftnxjORT0oeBB3tkQTNBUWCJkSC+qfkR9BBm9IFrXQLT3I8PYxnIp8UCZpwMwnqn5IzQXuUkqC5oCyQoEO6tQRNvYxND+OZyCdFgkpQNEWCjv650T+RWMuEAUlBokhQCYqmLKagnXMSlE6RoBIUTVk4Qft/QoLSKRJUgqIpiyHo6JtJ0DmgYARtHpS3D6/9/+LHmidBc0LBCHpcDS92TpsH1fDkpQQVxRnEkaCNj7X2l/qbmn9BB48mhvFM5JNCEbS+9x87xNf3TsPGBzPUhw9Nkvtcm3edTdJu1nMJR5V5jaPPZqq/rlo7zSgfC2qT/spSD5p3CqcHjczs9qA+BE1YE0gM45nIJ4UiaOPvkZl+r0ElKI9CEdTO4k332TzY9ziLl6A8CkbQxvvyi5rndVAJyqNgBB2VpPt91713CZpjigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoigSVoGiKBJWgaIoElaBoClrQpKR+6NINPptp9K4y13H02Uwjk/TCUA+6GBR0D5p0vxJ0MSgSVIKiKRJUgqIpElSCoikSVIKiKRJUgqIpElSCoikSVIKiKRJUgqIpElSCoikSVIKiKRJUgqIpElSCoikSVIKiKRJUgqIpElSCoineBL3aDYKlzxLULSR/FG+CfnkVhpePj+ZA0HRNGc9EPikeBL36s9Hy+ycJOgVI/ig+etCr3dvf5miIl6A+KX6G+MtHd5LVlKCiOILc8Br0PHgqQd1D8kfxt8z0NXglQV1D8kfxIejloyC4ZaZHX3qvQS/K1/t/8RJ0MSg+ZvF/Ml6e24vQ7z93ZvH1N7Xw5GXYPKjaLxJUFFeQSQQdiJG08bEWuSpBRXEEmWCIH4zpOut7p2Hjw6H55qHJ8E26md1nM+kTmuY6zj6bqf56+zC82GkLapP0wlAPuhgU0ptFjJndHlSCiuIEchNBvwatDK4zHVd1DSqKY8gNBP0SX4Be7XZnSvHY3jzY1yxeFJeQG8zid9s953nPVOmkXDbXoFoHFcUxxJWgo5J0vxJ0MShehvjb34aGeAkKkoJE8TJJOh8zSZKgojiH3ETQrEm6Xwm6GBQJKkHRFF+TJPuGeg3xziH5o3gSNHrDSPgl5U3LSfcrQReD4knQr9FEXstMriH5o3gS9FyCTgWSP4oXQYNgqRgN8VoHdQzJH8XPLP7yUXAnfZ1egoqiZSYJyqZIUAmKpkhQCYqmSFAJiqZIUAmKpkhQCYqmSFAJiqZIUAmKpkhQCYqmSFAJiqZIUAmKpqAFTYo+m0nJFGefzTQiSS+MwR609KCz66AHHaIlhtFV5JOC7kGT7rdf0FKpUiqVbiJoj4rRrt3EtNYpCeqVMq+Cln7fufdIqUrFSNWrVGt39IHu0eddFSMr16LvI9pa7LwE9UqZT0GNQs+tPEasllcVq9SDtZZS7aOldr/af2Cte/TseVfFlpXxxtIeRM5LUL+UORW0UnleKbXd7Feqe7Tl3NCBtZ6j7zo/FyEelB60vm/vVkoS1C9lUkhrtJyxoEYcI2hkWiTTmN3RB2LzWmK/G2llD02CeqZMBmmPoV4E7VPKFLI2KOGQlUPnKj/1i93Xu1Y0xAMoEwoaP4lehvj+S0V7nTk02o870D5a+aln+B+4Pi31T5KSNAU8E7mlTAQpVeJh0M8kaXCyXRqcgo8+0DMnKoW9Kg7M8PuXmSSoH8p8CtpaZhperhxaxBx5oOdoOKxi0lLquIeY2EoZA5KCRJnPIf4sXqgf/eujoaPjb5b9d/ES1A9lLidJNrN+s4gE9UOZy2UmGwm6GJT5XKg/k6CLQpGgaYgMbxlhPBP5pEjQZMTAauiYh5hUaNaApCBRJGiKoFl+n8R4JvJJkaCJiM5Kb++54YeYVGjWgKQgUSSoBEVTJGi2Ib53rX/4ISYVmjUgKUgUCZplktT/FyXDDzGp0KwBSUGizKugxd9F2432Jmk34VyYjlj9re1HN1ZNP2p32+eKZ93ts/4Do3fTzoWTI+JSJk8uBI0WXzwJWiy+/WPR5O2TYsFuknYTzz3LhFjd2HiyufHDb55srq4Wi5s/mnObm9G5t9H2b/bGb+MDo3fTz61PjijYUoqTOl48a79YJkEkvm6vgR/3uh06UCjY3ZWVeFsq3b1rFV2+2y5lpoK+DQLzrNhtIW038dyzTIjVjSdB8OSHH81mdXUzCDZ/bTerzqqItuuTI+IDxSAwrprN0G7Wc88mRzioItpdz3az5UIQFAorK0GwshJtg7tBcPdXy8tBsBwU791rmexA0Ez/L74YKEr23Lu/dW/ZjaDNg2p48lKCKk5zf+v+vbFd6LUEbXyshfU3tRRBfT9eZc5iBL0/tgu9lqD1vdOw8eHQ7D00GXcr349XmbNsbW2tr6e5l0nQi522oDZjLxt8P2BlrlK4v1VwdA3a7UElqOIqhcJ6axFqckGzXYNGina2qbsJ58LJEQ6qiLYhoooMzTKzKhKb5Vr4wvrZ+FxL0ObBfoZZfIRNOpk5IAqoFBJl+qVcS9Bs66CzKXzGFFApJApN0L74LXzGFFApJIoEpVBApZAoEpRCAZVCokhQCgVUCokiQSkUUCkkigSlUEClkCgSlEIBlUKiSFAKBVQKiSJBKRRQKSSKBKVQQKWQKBKUQgGVQqJIUAoFVAqJIkEpFFApJIoEpVBApZAoEpRCAZVCokhQCgVUCokiQSkUUCkkigSlUEClkCgSlEIBlUKiSFAKBVQKiSJBKRRQKSSKBKVQQKWQKGhBFWV2UQ86A0j+KOge1G/hM6aASiFRJCiFAiqFRJGgFAqoFBJFglIooFJIFAlKoYBKIVEkKIUCKoVEkaAUCqgUEkWCUiigUkgUCUqhgEohUSQohQIqhUSRoBQKqBQSRYJSKKBSSBQJSqGASiFRJCiFAiqFRJGgFAqoFBJFglIooFJIFAlKoYBKIVEkKIUCKoVEkaAUCqgUEkWCUiigUkgUCUqhgEohUSQohQIqhUSRoBQKqBQSBSPoRbn8oqb/Fy/KNCAOBK2/qYUnL8PmQdV+kaCiuIQ4GuKNpI2PtchVCSqKQ4gjQU3XWd87DRsfDs03D01Sf0JRnCVN0Prr7cPwYqctqI3fV9aMKaBSSBRCD3pcLkeXncbMbg8qQUVxBnG1zHRc1TWoKFOAOBA0HtubB/uaxYviGuKiBz0pl801qNZBRZkCRL9JokDyR5GgFAqoFBJFglIooFJIFLSgSSGt4oNqAZVCqiVLKRJ0FgGVQqpFglICKoVUiwSlBFQKqRYPgiqK20hQBR0JqqAjQRV0JKiCjktB+95S4jP11+VyNXqnS/Qnfz4T10BoGluKbRf/zRK9dTNukrSWcSho/5/WeYx9b3X9L4fhcdV3JWFcA6Zp7PsnvTfLhX19xE2S2jIOBe1/W7PHXNgHfFxt/nKYetNpJ66B0jT2peu9WY63/2uaIm6S1JZxKGj/H4Z4jinEDB7RSO+1jFYNlKaxfRWgWayRcZOktoxDQfv/tM5v7N8A2FHed3cR1wBpmqgEQLNYQeMmSW2ZfPagjff78Z73C66oBkjTXHSmI36bxVMPSrnQsrP4TvszBIU0zfF+Z8+7oB6uQfv/tM5jYj9tf9H8t18r4hoYTdMa2AHNYo2MmyS1ZfK4Dtqz4Lfte1gd9VeHvhIPpf6bxdM6qKK4jwRV0JGgCjoSVEFHgiroSFAFHQmqoCNBFXQkqIKOBJ1aLh8FQfA0DK92g6V/Pj4Kv38KgltHvquat0jQaeVq91UYfr11dLX71OzfOvr+6Y75/vY333XNWSTotPI/q+LlHz6f217TiBp9jaxVrhEJOr2cmyF+6XPUaV4+PvoaRHnqu6o5iwSdVq52lz7bHrQjqEb3m0SCTivnVsjzpdYQbzZm13dJ8xgJOq1YIS8fLX3uTpKMsbL0upGgU8sXcwX6LzMpsstM/7jVWmaSn9eNBJ1JznUBesNI0GnHjurRGqhyk0jQqceuL8nPm0aCKuhIUAUdCaqgI0EVdCSogo4EVdCRoAo6/wcDvjDXvlhnfQAAAABJRU5ErkJggg==" /><!-- --></p>
+<p>Under the unsmoothed model, there is no information about case
+fatality in the youngest ages, hence the estimates are being drawn from
+the vague prior distribution that take values between about 0 and 60.
+The smoothed model gives more useful estimates, aided by the assumption
+that case fatalities are similar between similar ages, and that case
+fatality is constant under the age of 40, though the wide y-axis limits
+in this particular plot obscure the estimates of between-age variability
+from the smoothed model.</p>
+<div id="other-options-to-disbayes" class="section level2">
+<h2>Other options to <code>disbayes</code></h2>
+<p>Full documentation is given in <a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>help(disbayes)</code></a>.
+Some more useful options include</p>
+<ul>
+<li><p><code>cf_model</code>. Model for how case fatality varies with
+age. As well as the default spline smooth model and unsmoothed models
+illustrated above, <code>cf_model=&quot;increasing&quot;</code> fits a model where
+case fatality is restricted to increase with age, and
+<code>cf_model=&quot;const&quot;</code> specifies a constant case fatality with
+age.</p></li>
+<li><p><code>inc_model</code>. By default, incidence rates are smoothed
+as a function of age using a spline, as with case fatality rates.
+<code>inc_model=&quot;indep&quot;</code> estimates independent incidence rates for
+each age.</p></li>
+<li><p><code>rem_model</code>. If no remission data are supplied, then
+the disease is assumed to have zero remission rate. If remission data
+are supplied, then remission rates are estimated. By default, these are
+assumed to be a constant function of age
+(<code>rem_model=&quot;const&quot;</code>). To estimate independent remission
+rates for each age, supply <code>rem_model=&quot;indep&quot;</code>. To model
+remission rates as a smooth spline function of age, use
+<code>rem_model=&quot;smooth&quot;</code>.</p></li>
+<li><p><code>hp_fixed</code>. A list of “hyperparameters” to fix at
+constant values. If using smooth spline functions, this option may be
+required if the appropriate level of smoothness for the spline cannot be
+determined from the data. When using the default optimisation method,
+this can lead to an error message mentioning
+<code>&quot;Error in chol.default(-H)&quot;</code>. In these cases, the smoothness
+can be fixed in advance, e.g. <code>hp_fixed = list(scf=1)</code> to fix
+the case fatality smoothness parameter to a typical value of 1. Lower
+values give more smoothness, higher values give wigglier curves. You may
+need to experiment with different values to determine what gives a
+plausible degree of smoothness.</p></li>
+</ul>
+</div>
+</div>
+<div id="advanced-models" class="section level1">
+<h1>Advanced models</h1>
+<p>The <code>disbayes</code> package provides a selection of more
+advanced models for more complex data structures. These are
+substantially more computationally intensive than the basic model shown
+in this vignette. For applications similar to the one shown here, using
+MCMC will typically take over an hour, while using optimisation will
+take a minute or less. Further information about how they are defined
+mathematically will be given in a forthcoming paper. See the <a href="https://chjackson.github.io/disbayes/reference/index.html">R help
+pages</a> for further information on how to invoke the functions.</p>
+<div id="hierarchical-models" class="section level2">
+<h2>Hierarchical models</h2>
+<p><a href="https://chjackson.github.io/disbayes/reference/disbayes_hier.html"><code>disbayes_hier</code></a>
+is used to fit a joint model for data from multiple areas.</p>
+</div>
+<div id="hierarchical-models-with-additive-area-and-gender-effects" class="section level2">
+<h2>Hierarchical models with additive area and gender effects</h2>
+<p><a href="https://chjackson.github.io/disbayes/reference/disbayes_hier.html"><code>disbayes_hier</code></a>
+can also be used to fit a joint model for data from multiple areas and
+different genders. It is assumed that the relative case fatality between
+women and men is the same for each area. While this is labelled
+<code>gender</code> it can be used for any single binary predictor,
+though for chronic diseases, we will usually want to consider the effect
+of gender.</p>
+</div>
+<div id="trends-through-time-non-hierarchical-models-only" class="section level2">
+<h2>Trends through time (non-hierarchical models only)</h2>
+<p><a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>disbayes</code></a>
+can include information about trends through calendar time, which can be
+age dependent. The ratio of incidence between previous years and the
+current year (the one represented by the data) can be supplied as a
+matrix, with one row per year of age and one column per calendar year.
+See the <a href="https://chjackson.github.io/disbayes/reference/disbayes.html"><code>disbayes</code></a>,
+arguments <code>inc_trend</code> and <code>cf_trend</code>.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-dismod2" class="csl-entry">
+Barendregt, J. J., G. J. Van Oortmarssen, T. Vos, and C. J. L. Murray.
+2003. <span>“<span class="nocase">A generic model for the assessment of
+disease epidemiology: the computational basis of DisMod
+II</span>.”</span> <em>Population Health Metrics</em> 1 (1): 4.
+</div>
+<div id="ref-flaxman2015" class="csl-entry">
+Flaxman, A. D., T. Vos, and C. J. L. Murray. 2015. <em>An Integrative
+Metaregression Framework for Descriptive Epidemiology</em>. University
+of Washington Press.
+</div>
+<div id="ref-disbayes_arxiv" class="csl-entry">
+Jackson, C. H., B. Zapata-Diomedi, and J. Woodcock. 2021. <span>“<span class="nocase">Bayesian multistate modelling of incomplete chronic
+disease burden data</span>.”</span> <em>arXiv Preprint</em>. <a href="https://arxiv.org/abs/2111.14100">https://arxiv.org/abs/2111.14100</a>.
+</div>
+<div id="ref-ohagan:elic" class="csl-entry">
+O’Hagan, A., C. E. Buck, A. Daneshkhah, J. R. Eiser, P. H. Garthwaite,
+D. J. Jenkinson, J. E Oakley, and T. Rakow. 2006. <em><span>Uncertain
+Judgements: Eliciting Experts’ Probabilities</span></em>. John Wiley
+&amp; Sons.
+</div>
+<div id="ref-RJ-2013-028" class="csl-entry">
+Sax, C., and P. Steiner. 2013. <span>“<span class="nocase">Temporal
+disaggregation of time series</span>.”</span> <em><span>The R
+Journal</span></em> 5 (2): 80–87. <a href="https://doi.org/10.32614/RJ-2013-028">https://doi.org/10.32614/RJ-2013-028</a>.
+</div>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
