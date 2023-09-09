@@ -29,7 +29,7 @@ The development repository for the `disbayes` R package for chronic disease epid
 
 * It is inspired by the [DisMod II](https://www.epigear.com/index_files/dismod_ii.html) and [DisMod-MR](https://github.com/ihmeuw/dismod_mr) packages used for the Global Burden of Disease studies.   It modifies and extends the formal, fully Bayesian framework described in the [book by Flaxman et al.](https://uwapress.uw.edu/book/9780295991849/an-integrative-metaregression-framework-for-descriptive-epidemiology/). 
 
-* The method is fully described in [Jackson et al. (2021)](https://arxiv.org/abs/2111.14100).
+* The method is fully described in [Jackson et al. (2023)](https://doi.org/10.1093/jrsssa/qnac015).
 
 * Source code is at the [GitHub repository](https://github.com/chjackson/disbayes)
 
@@ -37,7 +37,9 @@ The development repository for the `disbayes` R package for chronic disease epid
 
 ### CRAN version
 
-Coming soon.
+```r
+install.packages("disbayes")
+```
 
 
 ### Development version 
@@ -46,7 +48,7 @@ Coming soon.
 install.packages("devtools") # if devtools not already installed
 library(devtools)
 install_github("chjackson/disbayes")
- ```
+```
 
 If this fails, make sure that the `rstan` package is set up properly, as [explained here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started).  If you are on Windows, then follow these instructions for [installing rstan from source on Windows](https://github.com/stan-dev/rstan/wiki/Configuring-C---Toolchain-for-Windows).
 
@@ -54,3 +56,10 @@ If this fails, make sure that the `rstan` package is set up properly, as [explai
 ## Introduction and worked example
 
 [Bayesian estimation of chronic disease epidemiology from incomplete data: the disbayes package](https://chjackson.github.io/disbayes/articles/disbayes.html)
+
+
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/chjackson/disbayes/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/chjackson/disbayes/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/chjackson/disbayes/actions/workflows/test-coverage.yaml/badge.svg)](https://app.codecov.io/gh/chjackson/disbayes)
+<!-- badges: end -->
